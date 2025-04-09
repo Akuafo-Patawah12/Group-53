@@ -251,7 +251,7 @@ function Dashboard( ) {
   
   
   
-  const [email, setEmail] = useState('');
+  const [quayCrane,set_quay_crane] = useState('');
   const [requestType, setRequestType] = useState('');
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -313,8 +313,8 @@ function Dashboard( ) {
 
   // Function to handle the form submission
   const handleSubmit1 = async () => {
-    if (!email || !requestType) {
-      message.error('Please enter an email and select a request type');
+    if (!quayCrane || !requestType) {
+      message.error('Please enter an quay crane name and select a request type');
       return;
     }
 
@@ -325,8 +325,10 @@ function Dashboard( ) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          
         },
-        body: JSON.stringify({ email, requestType }),
+        credentials:"include",
+        body: JSON.stringify({ quayCrane, requestType }),
       });
 
       const data = await response.json();
@@ -402,7 +404,7 @@ function Dashboard( ) {
     <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
         
        <Modal
-        title="Request Form"
+        title="Request Battery Form"
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
@@ -412,9 +414,9 @@ function Dashboard( ) {
           <Row gutter={16}>
             <Col span={24}>
               <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                value={quayCrane}
+                onChange={(e) => set_quay_crane(e.target.value)}
+                placeholder="Enter quay crane name"
                 size="large"
                 style={{ marginBottom: '10px' }}
               />
@@ -428,9 +430,9 @@ function Dashboard( ) {
                 type={requestType === 'LXE' ? 'primary' : 'default'}
                 size="large"
                 style={{ width: '100%' }}
-                disabled={disabledLxe}
+                disabled={!disabledLxe}
               >
-                Request LXE
+                LXE Battery
               </Button>
             </Col>
             <Col span={12}>
@@ -441,7 +443,7 @@ function Dashboard( ) {
                 style={{ width: '100%' }}
                 
               >
-                Request Radio
+                Radio Battery
               </Button>
             </Col>
           </Row>
@@ -454,7 +456,7 @@ function Dashboard( ) {
                 size="large"
                 loading={loading}
                 style={{ width: '100%' }}
-                disabled={!email || !requestType || currentShift==="Off"}
+                disabled={!quayCrane || !requestType || currentShift==="Off"}
               >
                 Submit Request
               </Button>
@@ -519,7 +521,7 @@ function Dashboard( ) {
           <Button type="default" danger onClick={handleSignOut} disabled={!shiftStarted}>
             Sign Out
           </Button>
-          <Button type="primary" onClick={showModal}>Request LXE/Radio</Button>
+          <Button type="primary" onClick={showModal}>Request battery</Button>
         </Space>
       )}
 

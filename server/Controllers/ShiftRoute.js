@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router()
 const Attendance = require("../Models/Attendance");
 const verifyRefreshToken = require("../Middleware/Middleware");
+const user= require("../Models/User")
 const { Radio, Lxe } = require('../Models/Radio&Lxe');
 require("dotenv").config()
 const nodemailer = require("nodemailer")
@@ -186,15 +187,19 @@ const  userId  = req.user.id;
 
 })
 
-router.post('/submit-request', async (req, res) => {
-    const { email, requestType } = req.body;
+router.post('/submit-request',verifyRefreshToken, async (req, res) => {
+    const { quayCrane, requestType } = req.body;
+    const userId = req.user.id
   
-    if (!email || !requestType) {
+    if (!quayCrane || !requestType) {
       return res.status(400).json({ error: 'Email and request type are required' });
     }
   
     // Simulate saving the request in the database
     try {
+
+      const users = await user.findById(userId)
+      if (!users) return res.status(401).json({message: "Unauthorized"})
       // Here you can save the request to your database
       // Example: await Request.create({ email, requestType });
         // Send the reset email with the token
@@ -211,13 +216,13 @@ router.post('/submit-request', async (req, res) => {
               },
           });
       
-          
+          console.log(requestType)
       
           const mailOptions = {
-            from: '"Do Not Reply" <' + process.env.EMAIL + '>',
-            to: email,
-            subject: 'Password Reset Request',
-            text: requestType,
+            from: '"Do Not Reply" <' + users.email + '>',
+            to: process.env.EMAIL,
+            subject: requestType,
+            text: `${requestType}" "Battery request ${quayCrane}`,
           };
       
           await transporter.sendMail(mailOptions);

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { DatePicker, Table, Row, Col, Spin, message } from 'antd';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DatePicker, Table,Modal, Row, Col, Spin, message } from 'antd';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import axios from '../api/api'; // Adjust the import path as necessary
-
 import moment from 'moment';
 
 const AttendanceReport = () => {
@@ -13,20 +12,35 @@ const AttendanceReport = () => {
   });
   const [selectedMonth, setSelectedMonth] = useState('3'); // Default March
   const [selectedYear, setSelectedYear] = useState('2025');
+  const [attendanceDetails, setAttendanceDetails] = useState([]);
+  axios.defaults.withCredentials = true;
 
-   axios.defaults.withCredentials = true
   const fetchReportData = async () => {
     if (!selectedMonth || !selectedYear) return;
-    console.log('Fetching report data for:', selectedMonth, selectedYear); // Log the selected month and year
     const response = await axios.get(`/api/attendance/report?month=${selectedMonth}&year=${selectedYear}`);
-    const data = response.data;
-    console.log('Report Data:', data); // Log the response data
-
     if (response.status === 200) {
-      setReportData(data); // ✅ works fine
+      setReportData(response.data); 
     } else {
-      message.error('Failed to fetch report data'); 
-      console.error('Failed to fetch report data:', data);
+      message.error('Failed to fetch report data');
+    }
+  };
+
+
+  const [isModalVisible,setIsModalVisible] = useState(false)
+  const [modalTitle,setModalTitle] = useState("")
+  const fetchAttendanceByLxeOrRadio = async (lxeOrRadioNumber, type) => {
+    try {
+      const response = await axios.get(`/api/attendance/details?${type}=${lxeOrRadioNumber}&month=${selectedMonth}&year=${selectedYear}`);
+      if (response.status === 200) {
+        setAttendanceDetails(response.data);
+        setModalTitle(`${type}: ${lxeOrRadioNumber}`);
+        setIsModalVisible(true);
+      } else {
+        message.error('Failed to fetch attendance data');
+      }
+    } catch (error) {
+      message.error('Error fetching attendance data');
+      console.error(error);
     }
   };
 
@@ -39,13 +53,15 @@ const AttendanceReport = () => {
     setSelectedYear(date.format('YYYY'));
   };
 
-  // Helper function to generate separate bar chart data for LXE and Radio
-  const  getLxeBarChartData = () => {
-    return reportData.usageStats.LXE || [];
-  };
-
-  const getRadioBarChartData = () => {
-    return reportData.usageStats.Radio || [];
+  // Handle click on bar (LXE or Radio)
+  const handleBarClick = (data, type) => {
+    console.log('Bar click data:', data); // Check what data is being passed
+    if (data && data[type]) {
+      const number = data[type];
+      fetchAttendanceByLxeOrRadio(number, type);
+    } else {
+      console.error('Invalid data or missing type:', data);
+    }
   };
 
   const lateSignInColumns = [
@@ -62,57 +78,124 @@ const AttendanceReport = () => {
       render: (user) => user?.email || 'N/A',
     },
     { title: 'Shift', dataIndex: 'shiftType', key: 'shiftType' },
-    { title: 'Sign-In Time', dataIndex: 'sign_in_time', key: 'sign_in_time', render: (text) => moment(text).format('MMM YYYY hh:mm A') }, // Format sign-in time
-    { title: 'Sign-Out Time', dataIndex: 'sign_out_time', key: 'sign_out_time', render: (text) => text ? moment(text).format('MMM YYYY hh:mm A') : 'N/A' }, // Format sign-out time
+    { title: 'Sign-In Time', dataIndex: 'sign_in_time', key: 'sign_in_time', render: (text) => moment(text).format('MMM YYYY hh:mm A') },
+    { title: 'Sign-Out Time', dataIndex: 'sign_out_time', key: 'sign_out_time', render: (text) => text ? moment(text).format('MMM YYYY hh:mm A') : 'N/A' },
     { title: 'Location', dataIndex: 'location', key: 'location' },
   ];
 
+  const modalColumns = [
+  {
+    title: 'Full Name',
+    dataIndex: 'userId',
+    key: 'fullname',
+    render: (user) => user?.fullname || 'N/A',
+  },
+  {
+    title: 'Email',
+    dataIndex: 'userId',
+    key: 'email',
+    render: (user) => user?.email || 'N/A',
+  },
+  {
+    title: 'Sign-In Time',
+    dataIndex: 'sign_in_time',
+    key: 'sign_in_time',
+    render: (text) => moment(text).format('YYYY-MM-DD hh:mm A'),
+  },
+  {
+    title: 'Sign-Out Time',
+    dataIndex: 'sign_out_time',
+    key: 'sign_out_time',
+    render: (text) => text ? moment(text).format('YYYY-MM-DD hh:mm A') : 'N/A',
+  },
+  {
+    title: 'Shift',
+    dataIndex: 'shiftType',
+    key: 'shiftType',
+  },
+  {
+    title: 'Location',
+    dataIndex: 'location',
+    key: 'location',
+  },
+];
+
+
   return (
     <div style={{ padding: '20px' }}>
-    <section style={{ display: 'flex',justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-      <h2>Attendance Report</h2>
-      <Row gutter={16} style={{ width: "150px", height: "50px", alignItems: 'center' }}>
-  <Col span={24}>
-    <DatePicker
-      style={{ height: '100%', width: '100%', padding: '8px' }} // height boost here
-      value={moment(`${selectedYear}-${selectedMonth}`, 'YYYY-MM')}
-      onChange={handleDateChange}
-      picker="month"
-      format="YYYY-MM"
-    />
-  </Col>
-</Row>
 
+<Modal
+  title={`Attendance Details - ${modalTitle}`}
+  open={isModalVisible}
+  onCancel={() => setIsModalVisible(false)}
+  footer={null}
+  width={900}
+>
+  <Table
+    dataSource={attendanceDetails}
+    columns={modalColumns}
+    rowKey="_id"
+    scroll={{ x: true }}
+    pagination={{ pageSize: 5 }}
+  />
+</Modal>
+
+      <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2> Attendance  Monthly Report</h2>
+        <Row gutter={16} style={{ width: "150px", height: "50px", alignItems: 'center' }}>
+          <Col span={24}>
+            <DatePicker
+              value={moment(`${selectedYear}-${selectedMonth}`, 'YYYY-MM')}
+              onChange={handleDateChange}
+              picker="month"
+              format="YYYY-MM"
+            />
+          </Col>
+        </Row>
       </section>
 
       {reportData ? (
         <>
-          {/* Bar chart for LXE usage */}
           <div style={{ marginTop: '20px', height: 400 }}>
             <h3>LXE Usage</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getLxeBarChartData()}>
+              <BarChart data={reportData.usageStats.LXE}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="LXE" />
+                <XAxis 
+                  dataKey="LXE" 
+                  tickFormatter={(value) => `LXE-${value}`} // Adds "Radio-" to the label
+                />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#8884d8" />
+                <Bar dataKey="count" fill="#8884d8"
+                  
+                  barSize={40}
+                      onClick={(e) => handleBarClick(e, 'LXE')}
+                   
+                  />
+               
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Bar chart for Radio usage */}
           <div style={{ marginTop: '20px', height: 400 }}>
             <h3>Radio Usage</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getRadioBarChartData()}>
+              <BarChart data={reportData.usageStats.Radio}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Radio" />
+                <XAxis 
+                  dataKey="Radio" 
+                  tickFormatter={(value) => `Radio-${value}`} // Adds "Radio-" to the label
+                />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#82ca9d" />
+                <Bar dataKey="count" fill="#82ca9d"
+                      barSize={40}
+                      onClick={(e) => handleBarClick(e, 'Radio')}
+                  
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -121,6 +204,8 @@ const AttendanceReport = () => {
             <h3>Late Sign-Ins</h3>
             <Table dataSource={reportData?.lateSignIns || []} scroll={{ x: 'max-content' }} columns={lateSignInColumns} rowKey="_id" />
           </div>
+
+          
         </>
       ) : (
         <Spin size="large" />

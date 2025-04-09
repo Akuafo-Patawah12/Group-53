@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const moment = require('moment');
 const Attendance = require('../Models/Attendance');
-const { Radio, Lxe } = require('../Models/Radio&Lxe');
+const { RadioSchema, LxeSchema } = require('../Models/Radio&Lxe');
 const verifyAdmin = require('../Middleware/Adminware');
 const verifyRefreshToken = require('../Middleware/Middleware');
 // Record attendance for a user
@@ -165,6 +165,49 @@ router.get('/report', async (req, res) => {
 });
 
 
+router.get('/details', async (req, res) => {
+  const { LXE, Radio, month, year } = req.query;
+  console.log(LXE, Radio, month, year);
+
+  if (!month || !year) {
+    return res.status(400).json({ error: 'Month and year are required.' });
+  }
+
+  const formattedMonth = String(month).padStart(2, '0');
+  const startOfMonth = moment(`${year}-${formattedMonth}-01`).startOf('month');
+  const endOfMonth = moment(startOfMonth).endOf('month');
+
+  const query = {
+    sign_in_time: {
+      $gte: startOfMonth.toDate(),
+      $lte: endOfMonth.toDate(),
+    },
+  };
+
+  try {
+    let radio, lxe;
+
+    if (LXE) {
+      lxe = await LxeSchema.findOne({ lxe_number: LXE });
+      if (!lxe) return res.status(404).json({ error: 'LXE not found' });
+      query.Lxe_id = lxe._id;
+    }
+
+    if (Radio) {
+      radio = await RadioSchema.findOne({ radio_number: Radio });
+      if (!radio) return res.status(404).json({ error: 'Radio not found' });
+      query.radio_id = radio._id;
+    }
+    console.log('Final Query:', query);
+
+    const attendance = await Attendance.find(query).populate('userId', 'fullname email');
+    res.status(200).json(attendance);
+    console.log(attendance);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 
