@@ -474,7 +474,7 @@ function Dashboard( ) {
       
       {currentShift !== "Off" && (
         <Card style={{ marginTop: 20 ,border:"1px solid #d9d9d9",borderRadius:"10px"}}>
-          <Title level={4}>Enter Equipment Details</Title>
+          <Title level={4}>Enter Device Details</Title>
           <Space direction="vertical" style={{ width: "100%" }}>
             <Input
               placeholder="Enter Radio Number"

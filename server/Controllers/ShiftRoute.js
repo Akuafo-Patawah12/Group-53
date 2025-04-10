@@ -3,7 +3,7 @@ const router = express.Router()
 const Attendance = require("../Models/Attendance");
 const verifyRefreshToken = require("../Middleware/Middleware");
 const user= require("../Models/User")
-const { Radio, Lxe } = require('../Models/Radio&Lxe');
+const { RadioSchema, LxeSchema } = require('../Models/Radio&Lxe');
 require("dotenv").config()
 const nodemailer = require("nodemailer")
 
@@ -12,8 +12,8 @@ router.post("/start-shift", verifyRefreshToken, async (req, res) => {
   const { currentShift, lxeNumber, radioNumber, location } = req.body;
   const userId = req.user?.id;
 
-  console.log("📥 Request Body:", req.body);
-  console.log("🔐 User ID from Token:", userId);
+  console.log(" Request Body:", req.body);
+  console.log("User ID from Token:", userId);
 
   if (!currentShift || !userId) {
     return res.status(400).json({ message: "Missing shift type or user ID." });
@@ -21,18 +21,18 @@ router.post("/start-shift", verifyRefreshToken, async (req, res) => {
 
   try {
     // Find the radio
-    const radio = await Radio.findOne({ radio_number: radioNumber.trim().toUpperCase() });
+    const radio = await RadioSchema.findOne({ radio_number: radioNumber.trim().toUpperCase() });
     if (!radio) {
-      console.log("❌ Radio not found:", radioNumber);
+      console.log(" Radio not found:", radioNumber);
       return res.status(404).json({ message: "The provided radio number was not found." });
     }
 
     // Find the LXE (optional)
     let lxe = null;
     if (lxeNumber && lxeNumber.trim() !== "") {
-      lxe = await Lxe.findOne({ lxe_number: lxeNumber.trim().toUpperCase() });
+      lxe = await LxeSchema.findOne({ lxe_number: lxeNumber.trim().toUpperCase() });
       if (!lxe) {
-        console.log("❌ LXE not found:", lxeNumber);
+        console.log(" LXE not found:", lxeNumber);
         return res.status(404).json({ message: "The provided LXE number was not found." });
       }
     }
@@ -55,14 +55,14 @@ router.post("/start-shift", verifyRefreshToken, async (req, res) => {
     });
 
     if (existingUsage) {
-      console.log("⚠️ Active radio or LXE found:", existingUsage);
+      console.log(" Active radio or LXE found:", existingUsage);
       return res.status(400).json({ message: "Radio or LXE is already active in a shift today." });
     }
 
     // Check if user already has an active shift
     const activeUserShift = await Attendance.findOne({ userId, sign_out_time: null });
     if (activeUserShift) {
-      console.log("⚠️ User already on a shift:", activeUserShift);
+      console.log("User already on a shift:", activeUserShift);
       return res.status(400).json({ message: "You already have an active shift." });
     }
 

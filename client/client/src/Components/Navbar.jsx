@@ -65,7 +65,7 @@ const Navbar = () => {
               textDecoration: 'none',
             })}
           >
-            Attendance
+            Sign-ins
           </NavLink>
 
           <Button
@@ -100,7 +100,7 @@ const Navbar = () => {
             textDecoration: 'none',
           })}
         >
-          Attendance
+          Sign-ins
         </NavLink>
 
         <Button

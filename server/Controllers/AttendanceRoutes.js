@@ -103,7 +103,8 @@ router.get('/report', async (req, res) => {
     })
       .populate('userId', 'fullname email') // Populate user data
       .populate('Lxe_id', 'lxe_number location') // Populate LXE data
-      .populate('radio_id', 'radio_number'); // Populate Radio data
+      .populate('radio_id', 'radio_number') // Populate Radio data
+      .sort({ sign_in_time: 1 }); // Populate Radio data
 
     // Late sign-ins logic (Morning shift should sign in by 8 AM, Evening shift by 7 PM)
     const lateSignIns = attendanceRecords.filter((record) => {

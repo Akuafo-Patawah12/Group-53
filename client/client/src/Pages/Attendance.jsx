@@ -150,7 +150,7 @@ const AttendanceDashboard = () => {
 
   return (
     <div>
-      <h2 className="dashboard-title">Attendance Dashboard</h2>
+      <h2 className="dashboard-title">Device Sign In Records</h2>
 
       {/* Sign-in Count Cards */}
       <div className="sign-in-cards">
@@ -168,7 +168,7 @@ const AttendanceDashboard = () => {
 
       {/* Attendance Table */}
       <Card className="attendance-table-card">
-        <h3 className="table-title">Attendance Records</h3>
+        <h3 className="table-title">Records</h3>
         <Table dataSource={data} columns={columns} scroll={{ x: 'max-content' }} pagination={{ pageSize: 5 }} rowKey={(record, index) => index} />
       </Card>
 

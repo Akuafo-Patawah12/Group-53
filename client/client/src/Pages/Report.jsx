@@ -125,7 +125,7 @@ const AttendanceReport = () => {
     <div style={{ padding: '20px' }}>
 
 <Modal
-  title={`Attendance Details - ${modalTitle}`}
+  title={`Monthly report - ${modalTitle}`}
   open={isModalVisible}
   onCancel={() => setIsModalVisible(false)}
   footer={null}
@@ -141,7 +141,7 @@ const AttendanceReport = () => {
 </Modal>
 
       <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2> Attendance  Monthly Report</h2>
+        <h2>Monthly Report</h2>
         <Row gutter={16} style={{ width: "150px", height: "50px", alignItems: 'center' }}>
           <Col span={24}>
             <DatePicker

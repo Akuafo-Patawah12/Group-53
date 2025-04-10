@@ -331,7 +331,7 @@ useEffect(() => {
     return (
         <Layout style={{ minHeight: "100vh" }}>
         <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#001529", padding: "0 20px" }}>
-          <Title level={3} style={{ color: "white", margin: 0 }}>Attendance System</Title>
+          <Title level={3} style={{ color: "white", margin: 0 }}>Admin Dashboard</Title>
           <Space>
             
             
