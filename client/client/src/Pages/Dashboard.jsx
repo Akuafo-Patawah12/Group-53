@@ -182,6 +182,7 @@ function Dashboard( ) {
     setRadioAssigned(true);
     setLxcAssigned(true);
     startLocationTracking();
+    message.success("Shift started")
 }catch(error){
   if (error.response && error.response.status === 404) {
     message.error(error.response.data?.message || "Resource not found");
@@ -209,15 +210,17 @@ function Dashboard( ) {
     placeName: null,
     error: null,
   });
+  useEffect(() => {
 
-  function getLocationName() {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          setLocation((prev) => ({ ...prev, latitude: lat, longitude: lon }));
+  if (!("geolocation" in navigator)) {
+    setLocation((prev) => ({ ...prev, error: "Geolocation not supported" }));
+    return;
+  }
 
+  const watchId = navigator.geolocation.watchPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
           // Reverse Geocoding with Mapbox API
           const accessToken = "pk.eyJ1IjoiYWt1YWZvLTEiLCJhIjoiY200MXhxNnJrMDQzNjJrcjAzbXg4cTliMCJ9.6cwG6dff4E2UjnQz7q963A";
           try {
@@ -225,28 +228,35 @@ function Dashboard( ) {
               `https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?access_token=${accessToken}`
             );
             const data = await response.json();
-            if (data.features.length > 0) {
-              setLocation((prev) => ({ ...prev, placeName: data.features[0].place_name }));
-            } else {
-              setLocation((prev) => ({ ...prev, placeName: "Location not found" }));
-            }
+            const placeName =
+              data.features.length > 0
+                ? data.features[0].place_name
+                : "Location not found";
+    
+            setLocation({
+              latitude: lat,
+              longitude: lon,
+              placeName,
+              error: null,
+            });
           } catch (error) {
-            console.log(error)
-            setLocation((prev) => ({ ...prev, error: "Failed to fetch location name" }));
+            setLocation((prev) => ({
+              ...prev,
+              error: "Failed to fetch location name",
+            }));
           }
         },
         (error) => {
           setLocation((prev) => ({ ...prev, error: error.message }));
-        }
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
       );
-    } else {
-      setLocation((prev) => ({ ...prev, error: "Geolocation is not supported" }));
-    }
-  }
-  useEffect(() => {
-    getLocationName();
-  }, []);
-  
+    
+      // Cleanup the watcher on unmount
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
+    }, []);
 
   
   
@@ -369,7 +379,8 @@ function Dashboard( ) {
     setRadioAssigned(false);
     setLxcAssigned(false);
     navigate("/");
-
+    message.success("Shift ended")
+     
     return
       }
      
@@ -510,9 +521,11 @@ function Dashboard( ) {
         <Space style={{ marginTop: 20 }}>
           <Button
             type="primary"
-            onClick={()=> {
-              handleStartShift()
-              getLocationName();
+            onClick={() => {
+  
+            setTimeout(() => {
+              handleStartShift();
+            }, 500);
             }}
             disabled={currentShift === "Off" || shiftStarted || (radioAssigned && lxcAssigned)}
           >
