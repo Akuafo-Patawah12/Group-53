@@ -240,6 +240,7 @@ function Dashboard( ) {
               error: null,
             });
           } catch (error) {
+            console.log(error)
             setLocation((prev) => ({
               ...prev,
               error: "Failed to fetch location name",
