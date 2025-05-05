@@ -204,34 +204,48 @@ function Dashboard( ) {
  
 
 
-  const [location, setLocation] = useState({
-    latitude: null,
-    longitude: null,
-    placeName: null,
-    error: null,
-  });
-  useEffect(() => {
+  
 
-  if (!("geolocation" in navigator)) {
-    setLocation((prev) => ({ ...prev, error: "Geolocation not supported" }));
-    return;
-  }
+    const [cordinate,setCordinate] = useState("")
 
-  const watchId = navigator.geolocation.watchPosition(
-    async (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-          // Reverse Geocoding with Mapbox API
-          const accessToken = "pk.eyJ1IjoiYWt1YWZvLTEiLCJhIjoiY200MXhxNnJrMDQzNjJrcjAzbXg4cTliMCJ9.6cwG6dff4E2UjnQz7q963A";
+    const [location, setLocation] = useState({
+      latitude: null,
+      longitude: null,
+      placeName: null,
+      error: null,
+    });
+    
+    useEffect(() => {
+      if (!("geolocation" in navigator)) {
+        setLocation((prev) => ({ ...prev, error: "Geolocation not supported" }));
+        return;
+      }
+    
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          console.log("Coordinates:", lat, lon);
+       setCordinate(lon,lat)
           try {
+            const accessToken = "pk.eyJ1IjoiYWt1YWZvLTEiLCJhIjoiY200MXhxNnJrMDQzNjJrcjAzbXg4cTliMCJ9.6cwG6dff4E2UjnQz7q963A"; // Replace with your actual token
             const response = await fetch(
               `https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?access_token=${accessToken}`
             );
+    
+            if (!response.ok) throw new Error("Geocoding request failed");
+    
             const data = await response.json();
+    
+            // Look for the most specific location (e.g., address or point of interest)
+            const specificFeature = data.features.find((f) =>
+              f.place_type.includes("address") || f.place_type.includes("poi")
+            );
+    
             const placeName =
-              data.features.length > 0
-                ? data.features[0].place_name
-                : "Location not found";
+              specificFeature?.place_name ||
+              data.features[0]?.place_name ||
+              "Unknown place";
     
             setLocation({
               latitude: lat,
@@ -239,27 +253,30 @@ function Dashboard( ) {
               placeName,
               error: null,
             });
-          } catch (error) {
-            console.log(error)
-            setLocation((prev) => ({
-              ...prev,
-              error: "Failed to fetch location name",
-            }));
+          } catch (err) {
+            console.error("Geocoding error:", err.message);
+            setLocation({
+              latitude: lat,
+              longitude: lon,
+              placeName: "Coordinates found, address not resolved",
+              error: "Geocoding failed",
+            });
           }
         },
         (error) => {
-          setLocation((prev) => ({ ...prev, error: error.message }));
+          console.error("Geolocation error:", error);
+          setLocation((prev) => ({
+            ...prev,
+            error: `Location error: ${error.message}`,
+          }));
         },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
       );
-    
-      // Cleanup the watcher on unmount
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-      };
     }, []);
-
-  
   
   
   const [quayCrane,set_quay_crane] = useState('');
@@ -414,7 +431,6 @@ function Dashboard( ) {
 
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
-        
        <Modal
         title="Request Battery Form"
         open={isModalVisible}

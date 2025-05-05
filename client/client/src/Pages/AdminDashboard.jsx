@@ -73,9 +73,10 @@ const AdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
 
     // Filter attendance based on the search term
-    const filteredAttendance = attendance.filter((record) =>
-      record.userId.fullname.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredAttendance = attendance.filter((record) => {
+      if (!searchTerm) return true;
+      return record?.userId?.fullname?.toLowerCase().includes(searchTerm.toLowerCase());
+    });
     // fetch attendance data
     const fetchAttendance = async () => {
         try{
@@ -154,7 +155,7 @@ const AdminDashboard = () => {
         try{
             const response = await axios.get('/api/users/get-all-users');
             setUsers(response.data)
-            console.log(response.data)
+            console.log("users",response.data)
         }catch(error){
             console.log(error)
         }
@@ -165,8 +166,9 @@ const AdminDashboard = () => {
     const getLxe = async () => {
     try{
         const response = await axios.get('/api/lxeRadio/get-lxes');
+      
         setLxe(response.data)
-        console.log(response.data)
+        console.log("lxe",response.data)
     }catch(error){
         console.log(error)
     }
@@ -471,25 +473,25 @@ useEffect(() => {
                 <TabPane tab="LXE" key="4">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => setLxeModalOpen(true)}>Add LXE</Button>
                   <Table
-  dataSource={lxe}
-  
-  columns={[
-    { title: "LXE Number", dataIndex: "lxe_number", key: "lxe_number" },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Tooltip title="Delete LXE">
-          <Button
-            type="danger"
-            icon={<DeleteOutlined />}
-            onClick={() => deleteLxe(record)}
-          />
-        </Tooltip>
-      ),
-    },
-  ]}
-/>
+                    dataSource={lxe}
+                    
+                    columns={[
+                      { title: "LXE Number", dataIndex: "lxe_number", key: "lxe_number" },
+                      {
+                        title: "Action",
+                        key: "action",
+                        render: (_, record) => (
+                          <Tooltip title="Delete LXE">
+                            <Button
+                              type="danger"
+                              icon={<DeleteOutlined />}
+                              onClick={() => deleteLxe(record)}
+                            />
+                          </Tooltip>
+                        ),
+                      },
+                    ]}
+                  />
                 </TabPane>
               </Tabs>
             </Content>
@@ -502,7 +504,7 @@ useEffect(() => {
   <Input placeholder="Email" type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser,email:e.target.value})} style={{ marginBottom: 10 }} />
   <Input placeholder="Password" type="password" value={newUser.password} onChange={(e) =>  setNewUser({...newUser,password:e.target.value})} style={{ marginBottom: 10 }} />
 
-  <Select placeholder="Select Role" placeholder="User role" value={newUser.role} onChange={(value) => setNewUser({ ...newUser, role: value })} style={{ width: '100%', marginBottom: 10 }}>
+  <Select placeholder="Select Role"  value={newUser.role} onChange={(value) => setNewUser({ ...newUser, role: value })} style={{ width: '100%', marginBottom: 10 }}>
     <Select.Option value="Supervisor" >Supervisor</Select.Option>
     <Select.Option value="Admin">Admin</Select.Option>
     <Select.Option value="Lasher">Lasher</Select.Option>
@@ -543,7 +545,7 @@ useEffect(() => {
         {/* Add LXE Modal */}
         <Modal title="Add LXE" open={isLxeModalOpen} onCancel={() => setLxeModalOpen(false)} footer={null}>
           <Input placeholder="LXE Number" value={newLxe} onChange={(e)=> setNewLxe(e.target.value)} style={{ marginBottom: 10 }} />
-          <Button type="primary" block onClick={postLxe}>>Add LXE</Button>
+          <Button type="primary" block onClick={postLxe}>Add LXE</Button>
         </Modal>
   
         {/* Add Radio Modal */}

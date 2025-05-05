@@ -75,7 +75,7 @@ router.delete("/radio/:id",verifyAdmin, async (req, res) => {
   });
 
 
-router.get('/get-lxes',verifyAdmin, async(req, res) => {
+router.get('/get-lxes',verifyAdmin,async(req, res) => {
     
     try{
 
@@ -83,6 +83,7 @@ router.get('/get-lxes',verifyAdmin, async(req, res) => {
     res.status(200).json(lxeNumber);
 
     }catch(error){
+      console.log(error)
         res.status(500).json({message:"Failed to add LXE",error})
     }
     
